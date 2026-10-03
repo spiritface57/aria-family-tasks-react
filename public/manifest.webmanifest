@@ -1,0 +1,11 @@
+{
+  "name": "Daylight — Aria Family Tasks",
+  "short_name": "Daylight",
+  "description": "Shared family task planner and progress tracker",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6f8f4",
+  "theme_color": "#173a37",
+  "icons": [{"src":"/favicon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]
+}
