@@ -3,7 +3,7 @@ import type {Session} from '@supabase/supabase-js';
 import type {Member, Task, TaskEdit, TaskResult, TaskState} from '../types';
 
 const url = import.meta.env.VITE_SUPABASE_URL?.trim();
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
+const key = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? import.meta.env.VITE_SUPABASE_ANON_KEY)?.trim();
 export const configured = Boolean(url && key && !url.includes('YOUR-PROJECT'));
 export const client = configured ? createClient(url!,key!, {
   auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
