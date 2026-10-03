@@ -57,6 +57,16 @@ alter table public.tasks enable row level security;
 alter table public.task_results enable row level security;
 alter table public.invites enable row level security;
 
+drop policy if exists "members read family" on public.families;
+drop policy if exists "members read members" on public.family_members;
+drop policy if exists "members read tasks" on public.tasks;
+drop policy if exists "parents insert tasks" on public.tasks;
+drop policy if exists "parents update tasks" on public.tasks;
+drop policy if exists "parents delete tasks" on public.tasks;
+drop policy if exists "family reads results" on public.task_results;
+drop policy if exists "child inserts own result" on public.task_results;
+drop policy if exists "child updates own result" on public.task_results;
+
 create policy "members read family" on public.families for select to authenticated using ((select private.is_member(id)));
 create policy "members read members" on public.family_members for select to authenticated using ((select private.is_member(family_id)));
 create policy "members read tasks" on public.tasks for select to authenticated using ((select private.is_member(family_id)));
@@ -126,3 +136,6 @@ grant execute on function public.create_family(text,text) to authenticated;
 grant execute on function public.create_invite(uuid,text) to authenticated;
 grant execute on function public.join_family(text,text) to authenticated;
 grant execute on function public.update_task(uuid,text,time,integer,boolean) to authenticated;
+
+-- Ask PostgREST to refresh newly-created RPCs immediately.
+notify pgrst, 'reload schema';
