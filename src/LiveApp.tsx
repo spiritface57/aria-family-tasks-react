@@ -6,7 +6,7 @@ import {
   client,currentSession,createFamily,createInvite,fetchFamilyData,getMembership,insertTask,
   joinFamily,logIn,logInChild,logOut,recordResult,removeTask,signUp
 } from './lib/backend';
-import {DAYS,dateFromLocal,dayStats,dailyTasks,localDate,mondayOf,resultFor,timeLabel,weekDays} from './lib/schedule';
+import {DAYS,addDays,dateFromLocal,dayDescription,dayStats,dailyTasks,localDate,mondayOf,resultFor,timeLabel,weekDays} from './lib/schedule';
 
 type Page='today'|'week'|'progress'|'family';
 type AuthMode='login'|'signup'|'child';
@@ -132,11 +132,18 @@ export default function LiveApp(){
 
   const addTask=()=>void run(async()=>{
     if(!membership||membership.role!=='parent') return;
-    if(!newTitle.trim()) throw new Error('Enter a task name.');
+    const title=newTitle.trim();
+    if(!title) throw new Error('Enter a task name.');
     if(daysMask===0) throw new Error('Choose at least one day.');
-    await insertTask(membership.family_id,{title:newTitle.trim(),time_local:newTime,days_mask:daysMask,active:true});
+    await insertTask(membership.family_id,{title,time_local:newTime,days_mask:daysMask,active:true});
     setNewTitle('');
     await refresh();
+
+    const todayIndex=(new Date().getDay()+6)%7;
+    const hasOccurrenceLeftThisWeek=DAYS.some((_,index)=>index>=todayIndex && (daysMask&(1<<index))!==0);
+    if(!hasOccurrenceLeftThisWeek) setWeek(mondayOf(addDays(new Date(),7)));
+
+    setMessage(`Added “${title}” · ${dayDescription(daysMask)} at ${timeLabel(newTime)}`);
   });
 
   const deleteTask=(task:Task)=>void run(async()=>{
@@ -212,6 +219,7 @@ export default function LiveApp(){
     </aside>
     <main>
       {error&&<div className="error-box top-error">{error}</div>}
+      {message&&<div className="success-box top-error">{message}</div>}
       {page==='today'&&<section>
         <p className="eyebrow">TODAY · {new Date().toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric'})}</p>
         <h1>{isParent?'Today’s':'Small steps,'}<br/><em>{isParent?'family plan.':'big progress.'}</em></h1>
@@ -231,6 +239,11 @@ export default function LiveApp(){
           <div className="add"><input value={newTitle} onChange={e=>setNewTitle(e.target.value)} placeholder="New task"/><input type="time" value={newTime} onChange={e=>setNewTime(e.target.value)}/><button onClick={addTask} disabled={busy}><Plus/>Add task</button></div>
           <div className="day-picker">{DAYS.map((day,index)=><button key={day} className={(daysMask&(1<<index))?'selected':''} onClick={()=>setDaysMask(mask=>mask^(1<<index))}>{day}</button>)}</div>
         </div>}
+        <div className="planner-week-controls week-controls">
+          <button onClick={()=>setWeek(mondayOf(addDays(week,-7)))}>Previous week</button>
+          <button onClick={()=>setWeek(mondayOf(new Date()))}>Current week</button>
+          <button onClick={()=>setWeek(mondayOf(addDays(week,7)))}>Next week</button>
+        </div>
         <div className="week">{days.map((d,i)=><div className="day" key={localDate(d)}><header><b>{DAYS[i]}</b><span>{d.getDate()}</span></header>{dailyTasks(tasks,d).map(t=><div className="mini" key={t.id}><div><b>{t.title}</b><small>{timeLabel(t.time_local)}</small></div>{isParent&&<button className="mini-delete" title="Delete task" onClick={()=>deleteTask(t)}><Trash2/></button>}</div>)}</div>)}</div>
       </section>}
 
