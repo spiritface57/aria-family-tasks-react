@@ -6,7 +6,7 @@ const url = import.meta.env.VITE_SUPABASE_URL?.trim();
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 export const configured = Boolean(url && key && !url.includes('YOUR-PROJECT'));
 export const client = configured ? createClient(url!,key!, {
-  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}
+  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
 }) : null;
 function db() {if (!client) throw new Error('Supabase has not been configured.'); return client;}
 function unwrap<T>(result: {data: T | null,error: {message: string}|null}): T {
