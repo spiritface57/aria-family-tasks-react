@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {addDays,dateFromLocal,dayIndex,dayStats,dailyTasks,generateICS,localDate,occurs,weekDays} from './schedule.compiled.mjs';
+const task=(mask=127)=>({id:'abc',family_id:'x',title:'Read, 20 minutes',days_mask:mask,time_local:'19:00',active:true,created_at:'2026-09-01T12:00:00Z'});
+test('Monday is 0 and Sunday is 6',()=>{assert.equal(dayIndex(dateFromLocal('2026-10-05')),0);assert.equal(dayIndex(dateFromLocal('2026-10-04')),6)});
+test('weekday mask excludes weekend',()=>{assert.ok(occurs(task(31),dateFromLocal('2026-10-05')));assert.equal(occurs(task(31),dateFromLocal('2026-10-04')),false)});
+test('calendar math spans months',()=>{assert.equal(localDate(addDays(dateFromLocal('2026-10-31'),1)),'2026-11-01');assert.equal(localDate(weekDays(dateFromLocal('2026-10-04'))[0]),'2026-09-28')});
+test('progress distinguishes states',()=>{const tasks=[task(),{...task(),id:'other'}];const results=[{task_id:'abc',child_id:'child',local_date:'2026-10-05',state:'done'}];assert.deepEqual(dayStats(tasks,results,dateFromLocal('2026-10-05'),'child',dateFromLocal('2026-10-06')),{done:1,help:0,not_done:0,unanswered:1,total:2})});
+test('calendar has recurrence and alarm',()=>{const ics=generateICS([task(21)],dateFromLocal('2026-10-03'),'America/Toronto');assert.match(ics,/BYDAY=MO,WE,FR/);assert.match(ics,/BEGIN:VALARM/)});
+test('daily tasks sort by time',()=>{const early={...task(),id:'early',time_local:'07:00'};assert.deepEqual(dailyTasks([task(),early],dateFromLocal('2026-10-05')).map(t=>t.id),['early','abc'])});
