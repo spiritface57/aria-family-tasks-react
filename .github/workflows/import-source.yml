@@ -1,0 +1,25 @@
+name: Import initial React source
+on:
+  push:
+    branches: [main]
+    paths: ['.repo-seed.br']
+permissions:
+  contents: write
+jobs:
+  import-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack sanitized source
+        shell: bash
+        run: |
+          node -e "const fs=require('fs');const zlib=require('zlib');fs.writeFileSync('source.tar',zlib.brotliDecompressSync(fs.readFileSync('.repo-seed.br')))"
+          tar -xf source.tar
+          rm -f source.tar .repo-seed.br
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "feat: import Aria family tasks React source"
+            git push origin HEAD:main
+          fi
